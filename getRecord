@@ -8,7 +8,8 @@ principalIDNS=$(cat principalIDNS)
 institution="OHS"
 
 while read oclc
-	oclc=$(sed 's/[^0-9]//g' <<< "$oclc")
+	# strip nondigits and leading zeros
+	oclc=$(sed 's/[^0-9]//g' | sed 's/^0*//' <<< "$oclc")
 	nonce=$(cat /dev/urandom | tr -dc '0-9a-z' | fold -w 256 | head -n 1 | head --bytes 16)
 	timestamp=$(date +%s)
 	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "GET" "www.oclc.org" "443" "/wskey" "holdingLibraryCode=$institution" "oclcNumber=$oclc" "")
