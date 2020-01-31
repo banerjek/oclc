@@ -1,0 +1,21 @@
+#!/bin/bash
+
+timestamp=$(date +%s)
+wskey=$(cat wskey)
+secret=$(cat secret)
+principalID=$(cat principalID)
+principalIDNS=$(cat principalIDNS)
+
+
+while read oclc
+do
+	nonce=$(cat /dev/urandom | tr -dc '0-9a-z' | fold -w 256 | head -n 1 | head --bytes 16)
+	
+	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "DELETE" "www.oclc.org" "443" "/wskey" "cascade=1" "classificationScheme=NationalLibraryOfMedicine" "oclcNumber=$oclc" "" )
+	
+	signature=$(echo "$prehashstring" | openssl dgst -sha256 -hmac "$secret" -binary| sed 's/^.*= //' | base64)
+	deleterequest="https://worldcat.org/ih/data?classificationScheme=NationalLibraryOfMedicine&oclcNumber=$oclc&cascade=1"
+	
+	response=$(curl -s -X DELETE -H "Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS" $deleterequest)
+	echo $response |tee -a responses
+done < junk
