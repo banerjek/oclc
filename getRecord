@@ -8,16 +8,19 @@ principalIDNS=$(cat principalIDNS)
 institution="OHS"
 
 while read oclc
+do
 	# strip nondigits and leading zeros
-	oclc=$(sed 's/[^0-9]//g' | sed 's/^0*//' <<< "$oclc")
+	oclc=$(sed 's/[^0-9]//g' <<< "$oclc")
+	oclc=$(sed 's/^0*//' <<< "$oclc")
 	nonce=$(cat /dev/urandom | tr -dc '0-9a-z' | fold -w 256 | head -n 1 | head --bytes 16)
 	timestamp=$(date +%s)
 	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "GET" "www.oclc.org" "443" "/wskey" "holdingLibraryCode=$institution" "oclcNumber=$oclc" "")
 	
 	signature=$(echo "$prehashstring" | openssl dgst -sha256 -hmac "$secret" -binary| sed 's/^.*= //' | base64)
 	getrequest="https://worldcat.org/ih/checkholdings?holdingLibraryCode=$institution&oclcNumber=$oclc"
+	headers="Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS"
 	
-	
-	$response=$(curl -s -H "Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS" $getrequest)
+	response=$(curl -iv -H "$headers" "$getrequest") 
 	echo "$oclc	$response" |tee -a holdingsfound
-done < lhr_found
+
+done < sourcefile
