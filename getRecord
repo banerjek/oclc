@@ -20,7 +20,7 @@ do
 	getrequest="https://worldcat.org/ih/checkholdings?holdingLibraryCode=$institution&oclcNumber=$oclc"
 	headers="Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS"
 	
-	response=$(curl -iv -H "$headers" "$getrequest") 
+	response=$(curl -s -H "$headers" "$getrequest") 
 	echo "$oclc	$response" |tee -a holdingsfound
 
 done < sourcefile
