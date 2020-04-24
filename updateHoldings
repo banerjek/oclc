@@ -14,7 +14,7 @@ do
 	nonce=$(cat /dev/urandom | tr -dc '0-9a-z' | fold -w 256 | head -n 1 | head --bytes 16)
 	timestamp=$(date +%s)
 	
-	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "POST" "www.oclc.org" "443" "/wskey" "cascade=1" "classificationScheme=NationalLibraryOfMedicine" "oclcNumber=$oclc" "")
+	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "POST" "www.oclc.org" "443" "/wskey" "classificationScheme=NationalLibraryOfMedicine" "oclcNumber=$oclc" "")
 	
 	signature=$(echo "$prehashstring" | openssl dgst -sha256 -hmac "$secret" -binary| sed 's/^.*= //' | base64)
 	setholdingrequest="https://worldcat.org/ih/data?classificationScheme=NationalLibraryOfMedicine&oclcNumber=$oclc&cascade=1"
