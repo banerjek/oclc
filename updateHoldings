@@ -17,8 +17,10 @@ do
 	prehashstring=$(printf '%s\n' "$wskey" "$timestamp" "$nonce" "" "POST" "www.oclc.org" "443" "/wskey" "classificationScheme=NationalLibraryOfMedicine" "oclcNumber=$oclc" "")
 	
 	signature=$(echo "$prehashstring" | openssl dgst -sha256 -hmac "$secret" -binary| sed 's/^.*= //' | base64)
-	setholdingrequest="https://worldcat.org/ih/data?classificationScheme=NationalLibraryOfMedicine&oclcNumber=$oclc&cascade=1"
-	echo $oclc	
-	response=$(curl -s -X POST -H "Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS" $setholdingrequest)
+	setholdingrequest="https://worldcat.org/ih/data?classificationScheme=NationalLibraryOfMedicine&oclcNumber=$oclc"
+
+	# curl doesn't allow you to get headers without also getting response body so we dump reponse body
+	# to /dev/null file and headers (using -D) to stdout file
+	response=$(curl -i -o /dev/null -D - -s -X POST -H "Authorization: http://www.worldcat.org/wskey/v2/hmac/v1 clientId=$wskey, timestamp=$timestamp, nonce=$nonce, signature=$signature, principalID=$principalID, principalIDNS=$principalIDNS" $setholdingrequest |grep HTTP)
 	echo "$oclc	$response" |tee -a holdings_set
-done < update.csv
+done < sourcefile
